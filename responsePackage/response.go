@@ -6,10 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 )
 
-var responseDBEventPackageHeaderLength = 10 // bytes
+var ResponseDBEventPackageHeaderLength = 10 // bytes
 
 type ResponseDBEventPackage struct {
 	Version        [2]byte
@@ -71,22 +70,24 @@ func (p *ResponseDBEventPackage) PackToBinary() ([]byte, error) {
 	return buf.Bytes(), err
 }
 
+func (p *ResponseDBEventPackage) TotalLength() int {
+	return int(uint16(ResponseDBEventPackageHeaderLength) + p.StatusLength + p.ErrorLength + p.ValuesLength + p.ReservedLength)
+}
+
 func ScannerSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	if !atEOF && len(data) >= 2 && data[0] == 'V' && data[1] >= '1' && data[1] <= '9' {
-		if len(data) >= responseDBEventPackageHeaderLength {
+		if len(data) >= ResponseDBEventPackageHeaderLength {
 			switch data[1] {
 			case '1':
 				return sannerSplit(data, atEOF)
 			case '2':
 			case '3':
 			default:
-
 			}
 		}
 	}
 
-	log.Printf("Wrong server response protocol, data: %s", string(data))
-	return -1, nil, errors.New(fmt.Sprintf("Wrong server protocol, data: %s", data))
+	return -1, nil, errors.New(fmt.Sprintf("Wrong server protocol, data: %s", string(data)))
 }
 
 func sannerSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
@@ -98,10 +99,10 @@ func sannerSplit(data []byte, atEOF bool) (advance int, token []byte, err error)
 	err = binary.Read(bytes.NewReader(data[4:6]), binary.BigEndian, &valuesLength)
 	err = binary.Read(bytes.NewReader(data[6:8]), binary.BigEndian, &reservedLength)
 
-	totalLength := int(statusLength + valuesLength + reservedLength + uint16(responseDBEventPackageHeaderLength))
+	totalLength := int(statusLength + valuesLength + reservedLength + uint16(ResponseDBEventPackageHeaderLength))
 	if totalLength <= len(data) {
 		return totalLength, data[:totalLength], nil
 	}
 
-	return -1, nil, errors.New(fmt.Sprintf("Wrong server protocol version 1, data: %s", data))
+	return -1, nil, errors.New(fmt.Sprintf("Wrong server protocol version 1, data: %s", string(data)))
 }

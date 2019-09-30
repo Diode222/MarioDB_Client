@@ -3,8 +3,6 @@ package responsePackage
 import (
 	"bufio"
 	"bytes"
-	"github.com/panjf2000/gnet/ringbuffer"
-	"log"
 	"sync"
 )
 
@@ -20,25 +18,24 @@ func ResponseDBEventPackageParser() *responseDBEventPackageParser {
 	return parser
 }
 
-func (p *responseDBEventPackageParser) Parse(inBuf *ringbuffer.RingBuffer) ([]*ResponseDBEventPackage, error) {
+func (p *responseDBEventPackageParser) Parse(buffer *bytes.Buffer) ([]*ResponseDBEventPackage, int, error) {
 	var err error
 	packages := []*ResponseDBEventPackage{}
-	scanner := bufio.NewScanner(inBuf)
+	buf := bytes.NewBuffer(buffer.Bytes())
+	scanner := bufio.NewScanner(buf)
 	scanner.Split(ScannerSplit)
+	consumeBytesCount := 0
 	for scanner.Scan() {
 		dbEventPack := new(ResponseDBEventPackage)
 		err = dbEventPack.Unpack(bytes.NewReader(scanner.Bytes()))
 		if err != nil {
-			head, tail := inBuf.PreReadAll()
-			log.Printf("responseDBEventPackageParser parse failed, %s", string(append(head, tail...)))
 			continue
 		}
 
+		consumeBytesCount += dbEventPack.TotalLength()
+
 		packages = append(packages, dbEventPack)
 	}
-	if err = scanner.Err(); err != nil {
-		head, tail := inBuf.PreReadAll()
-		log.Printf("responseDBEventPackageParser parse failed, %s", string(append(head, tail...)))
-	}
-	return packages, err
+
+	return packages, consumeBytesCount, err
 }
