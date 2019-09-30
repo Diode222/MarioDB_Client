@@ -12,12 +12,12 @@ import (
 
 var buffer *bytes.Buffer = bytes.NewBuffer(nil)
 
-var conn *connSyncObj
+var conn *ConnSyncObj
 var once sync.Once
 
-func GetConnSync(address string) *connSyncObj {
+func GetConnSync(address string) *ConnSyncObj {
 	once.Do(func() {
-		conn = &connSyncObj{
+		conn = &ConnSyncObj{
 			Lock: sync.RWMutex{},
 			Conn: getConn(address),
 		}
@@ -25,7 +25,7 @@ func GetConnSync(address string) *connSyncObj {
 	return conn
 }
 
-type connSyncObj struct {
+type ConnSyncObj struct {
 	Lock sync.RWMutex
 	Conn net.Conn
 }
@@ -38,11 +38,11 @@ func getConn(address string) net.Conn {
 	return c
 }
 
-func (c *connSyncObj) ReceiveResponsePackages() ([]*responsePackage.ResponseDBEventPackage, error) {
+func (c *ConnSyncObj) ReceiveResponsePackages() ([]*responsePackage.ResponseDBEventPackage, error) {
 	data := make([]byte, 4096, 4096)
 	var err error
 	var n int = 0
-	for  {
+	for {
 		n, _ = c.Conn.Read(data)
 		if n > 0 {
 			break
@@ -56,7 +56,7 @@ func (c *connSyncObj) ReceiveResponsePackages() ([]*responsePackage.ResponseDBEv
 
 	buffer.Write(data[:n])
 
-	packages, consumeBytesLength, err:=  responsePackage.ResponseDBEventPackageParser().Parse(buffer)
+	packages, consumeBytesLength, err := responsePackage.ResponseDBEventPackageParser().Parse(buffer)
 	if err != nil {
 		log.Print(err)
 	}
