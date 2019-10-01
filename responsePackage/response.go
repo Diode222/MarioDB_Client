@@ -92,14 +92,16 @@ func ScannerSplit(data []byte, atEOF bool) (advance int, token []byte, err error
 
 func sannerSplit(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	statusLength := uint16(0)
+	errorLength := uint16(0)
 	valuesLength := uint16(0)
 	reservedLength := uint16(0)
 
 	err = binary.Read(bytes.NewReader(data[2:4]), binary.BigEndian, &statusLength)
-	err = binary.Read(bytes.NewReader(data[4:6]), binary.BigEndian, &valuesLength)
-	err = binary.Read(bytes.NewReader(data[6:8]), binary.BigEndian, &reservedLength)
+	err = binary.Read(bytes.NewReader(data[4:6]), binary.BigEndian, &errorLength)
+	err = binary.Read(bytes.NewReader(data[6:8]), binary.BigEndian, &valuesLength)
+	err = binary.Read(bytes.NewReader(data[8:10]), binary.BigEndian, &reservedLength)
 
-	totalLength := int(statusLength + valuesLength + reservedLength + uint16(ResponseDBEventPackageHeaderLength))
+	totalLength := int(statusLength + errorLength + valuesLength + reservedLength + uint16(ResponseDBEventPackageHeaderLength))
 	if totalLength <= len(data) {
 		return totalLength, data[:totalLength], nil
 	}
