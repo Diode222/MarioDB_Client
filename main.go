@@ -71,8 +71,8 @@ func main() {
 		Version:        [2]byte{'V', '1'},
 		MethodLength:   8,
 		DBNameLength:   4,
-		KeysLength:     18,
-		ValuesLength:   16,
+		KeysLength:     23,
+		ValuesLength:   23,
 		StartLength:    0,
 		LimitLength:    0,
 		PrefixLength:   0,
@@ -80,8 +80,8 @@ func main() {
 		ReservedLength: 0,
 		Method:         []byte("BATCHPUT"),
 		DBName:         []byte("LVYA"),
-		Keys:           []byte("abcde##adc##heihei"),
-		Values:         []byte("12345##123##nono"),
+		Keys:           []byte("abcde##adc##heihei##abc"),
+		Values:         []byte("12345##123##nono##diode"),
 		Start:          nil,
 		Limit:          nil,
 		Prefix:         nil,
@@ -169,8 +169,8 @@ func main() {
 		DBNameLength:   4,
 		KeysLength:     0,
 		ValuesLength:   0,
-		StartLength:    0,
-		LimitLength:    0,
+		StartLength:    3,
+		LimitLength:    5,
 		PrefixLength:   0,
 		SettingsLength: 0,
 		ReservedLength: 0,
@@ -178,8 +178,8 @@ func main() {
 		DBName:         []byte("LVYA"),
 		Keys:           nil,
 		Values:         nil,
-		Start:          nil,
-		Limit:          nil,
+		Start:          []byte("abc"),
+		Limit:          []byte("abcde"), // [Start, Limit)
 		Prefix:         nil,
 		Settings:       nil,
 		Reserved:       nil,
@@ -192,6 +192,40 @@ func main() {
 	for _, p := range packages {
 		fmt.Println(string(p.Status))
 		fmt.Println(string(p.Values))
+		fmt.Println(string(p.Reserved))
+		fmt.Println(string(p.Error))
+	}
+
+	seekRangePack := &requestPackage.RequestDBEventPackage{
+		Version:        [2]byte{'V', '1'},
+		MethodLength:   9,
+		DBNameLength:   4,
+		KeysLength:     5,
+		ValuesLength:   0,
+		StartLength:    0,
+		LimitLength:    0,
+		PrefixLength:   0,
+		SettingsLength: 0,
+		ReservedLength: 0,
+		Method:         []byte("SEEKRANGE"),
+		DBName:         []byte("LVYA"),
+		Keys:           []byte("abcdf"),
+		Values:         nil,
+		Start:          nil,
+		Limit:          nil, // [Start, Limit)
+		Prefix:         nil,
+		Settings:       nil,
+		Reserved:       nil,
+	}
+
+	connSync.Lock.Lock()
+	seekRangePack.Pack(connSync.Conn)
+	connSync.Lock.Unlock()
+	packages, _ = connSync.ReceiveResponsePackages()
+	for _, p := range packages {
+		fmt.Println(string(p.Status))
+		fmt.Println(string(p.Values))
+		fmt.Println(string(p.Reserved))
 		fmt.Println(string(p.Error))
 	}
 
