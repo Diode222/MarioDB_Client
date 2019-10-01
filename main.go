@@ -99,6 +99,37 @@ func main() {
 		fmt.Println(string(p.Error))
 	}
 
+	batchDeletePack := &requestPackage.RequestDBEventPackage{
+		Version:        [2]byte{'V', '1'},
+		MethodLength:   11,
+		DBNameLength:   4,
+		KeysLength:     10,
+		ValuesLength:   0,
+		StartLength:    0,
+		LimitLength:    0,
+		PrefixLength:   0,
+		SettingsLength: 0,
+		ReservedLength: 0,
+		Method:         []byte("BATCHDELETE"),
+		DBName:         []byte("LVYA"),
+		Keys:           []byte("abcde##adc"),
+		Values:         nil,
+		Start:          nil,
+		Limit:          nil,
+		Prefix:         nil,
+		Settings:       nil,
+		Reserved:       nil,
+	}
+
+	connSync.Lock.Lock()
+	batchDeletePack.Pack(connSync.Conn)
+	connSync.Lock.Unlock()
+	packages, _ = connSync.ReceiveResponsePackages()
+	for _, p := range packages {
+		fmt.Println(string(p.Status))
+		fmt.Println(string(p.Values))
+		fmt.Println(string(p.Error))
+	}
 
 	putPack := &requestPackage.RequestDBEventPackage{
 		Version:        [2]byte{'V', '1'},
@@ -132,6 +163,37 @@ func main() {
 		fmt.Println(string(p.Error))
 	}
 
+	deletePack := &requestPackage.RequestDBEventPackage{
+		Version:        [2]byte{'V', '1'},
+		MethodLength:   6,
+		DBNameLength:   4,
+		KeysLength:     5,
+		ValuesLength:   0,
+		StartLength:    0,
+		LimitLength:    0,
+		PrefixLength:   0,
+		SettingsLength: 0,
+		ReservedLength: 0,
+		Method:         []byte("DELETE"),
+		DBName:         []byte("LVYA"),
+		Keys:           []byte("abcde"),
+		Values:         nil,
+		Start:          nil,
+		Limit:          nil,
+		Prefix:         nil,
+		Settings:       nil,
+		Reserved:       nil,
+	}
+
+	connSync.Lock.Lock()
+	deletePack.Pack(connSync.Conn)
+	connSync.Lock.Unlock()
+	packages, _ = connSync.ReceiveResponsePackages()
+	for _, p := range packages {
+		fmt.Println(string(p.Status))
+		fmt.Println(string(p.Values))
+		fmt.Println(string(p.Error))
+	}
 
 	doneChan := make(chan bool, 1)
 	wg := &sync.WaitGroup{}
