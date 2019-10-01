@@ -86,7 +86,7 @@ func main() {
 
 	pack := &requestPackage.RequestDBEventPackage{
 		Version:        [2]byte{'V', '1'},
-		MethodLength:   3,
+		MethodLength:   uint16(len([]byte("BATCHGET"))),
 		DBNameLength:   4,
 		KeysLength:     10,
 		ValuesLength:   10,
@@ -95,7 +95,7 @@ func main() {
 		PrefixesLength: 0,
 		SettingsLength: 0,
 		ReservedLength: 0,
-		Method:         []byte("GET"),
+		Method:         []byte("BATCHGET"),
 		DBName:         []byte("LVYA"),
 		Keys:           []byte("xixi##haha"),
 		Values:         []byte("niubi##xyz"),
@@ -106,9 +106,36 @@ func main() {
 		Reserved:       nil,
 	}
 
+	//createPack := &requestPackage.RequestDBEventPackage{
+	//	Version:        [2]byte{'V', '1'},
+	//	MethodLength:   6,
+	//	DBNameLength:   4,
+	//	KeysLength:     0,
+	//	ValuesLength:   0,
+	//	StartsLength:   0,
+	//	LimitsLength:   0,
+	//	PrefixesLength: 0,
+	//	SettingsLength: 0,
+	//	ReservedLength: 0,
+	//	Method:         []byte("CREATE"),
+	//	DBName:         []byte("LVYA"),
+	//	Keys:           nil,
+	//	Values:         nil,
+	//	Starts:         nil,
+	//	Limits:         nil,
+	//	Prefixes:       nil,
+	//	Settings:       nil,
+	//	Reserved:       nil,
+	//}
+	//
+	//
+	//connSync.Lock.Lock()
+	//go createPack.Pack(connSync.Conn)
+	//connSync.Lock.Unlock()
+
 	doneChan := make(chan bool, 1)
 	wg := &sync.WaitGroup{}
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < 10; i++ {
 		wg.Add(2)
 		go handleSend(pack, connSync, doneChan, wg)
 		go handleReceive(connSync, doneChan, wg)
@@ -135,8 +162,9 @@ func handleReceive(connSync *client.ConnSyncObj, doneChan chan bool, wg *sync.Wa
 		<-doneChan
 	}
 	for _, p := range packages {
-		fmt.Println(string(p.Status))
-		fmt.Println(string(p.Values))
+		fmt.Println("status: " + string(p.Status))
+		fmt.Println("values: " + string(p.Values))
+		fmt.Println("error: " + string(p.Error))
 	}
 
 	wg.Done()
