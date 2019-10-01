@@ -8,87 +8,16 @@ import (
 	"sync"
 )
 
+// TODO Once a package sended, handReceive() should be used once.
 func main() {
 	connSync := client.GetConnSync("127.0.0.1:50000")
 	fmt.Println("来不来")
 
-	//var wg sync.WaitGroup
-	//wg.Add(2)
-	//
-	//pack1 := &requestPackage.RequestDBEventPackage{
-	//	Version:        [2]byte{'V', '1'},
-	//	MethodLength:   3,
-	//	DBNameLength:   4,
-	//	KeysLength:     10,
-	//	ValuesLength:   10,
-	//	StartsLength:   0,
-	//	LimitsLength:   0,
-	//	PrefixesLength: 0,
-	//	SettingsLength: 0,
-	//	ReservedLength: 0,
-	//	Method:         []byte("GET"),
-	//	DBName:         []byte("LVYA"),
-	//	Keys:           []byte("xixi##haha"),
-	//	Values:         []byte("niubi##xyz"),
-	//	Starts:         nil,
-	//	Limits:         nil,
-	//	Prefixes:       nil,
-	//	Settings:       nil,
-	//	Reserved:       nil,
-	//}
-	//
-	//pack2 := &requestPackage.RequestDBEventPackage{
-	//	Version:        [2]byte{'V', '1'},
-	//	MethodLength:   3,
-	//	DBNameLength:   4,
-	//	KeysLength:     10,
-	//	ValuesLength:   10,
-	//	StartsLength:   0,
-	//	LimitsLength:   0,
-	//	PrefixesLength: 0,
-	//	SettingsLength: 0,
-	//	ReservedLength: 0,
-	//	Method:         []byte("GET"),
-	//	DBName:         []byte("yang"),
-	//	Keys:           []byte("yesy##nono"),
-	//	Values:         []byte("xiyou##qwe"),
-	//	Starts:         nil,
-	//	Limits:         nil,
-	//	Prefixes:       nil,
-	//	Settings:       nil,
-	//	Reserved:       nil,
-	//}
-	//
-	//go func() {
-	//	connSync.Lock.Lock()
-	//	pack1.Pack(connSync.Conn)
-	//	connSync.Lock.Unlock()
-	//	wg.Done()
-	//}()
-	//
-	//go func() {
-	//	connSync.Lock.Lock()
-	//	pack2.Pack(connSync.Conn)
-	//	connSync.Lock.Unlock()
-	//	wg.Done()
-	//}()
-	//wg.Wait()
-	//
-	//packages, err := connSync.ReceiveResponsePackages()
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//for _, p := range packages {
-	//	fmt.Println(string(p.Status))
-	//	fmt.Println(string(p.Values))
-	//}
-
 	pack := &requestPackage.RequestDBEventPackage{
 		Version:        [2]byte{'V', '1'},
-		MethodLength:   uint16(len([]byte("BATCHGET"))),
+		MethodLength:   8,
 		DBNameLength:   4,
-		KeysLength:     10,
+		KeysLength:     11,
 		ValuesLength:   10,
 		StartsLength:   0,
 		LimitsLength:   0,
@@ -97,7 +26,7 @@ func main() {
 		ReservedLength: 0,
 		Method:         []byte("BATCHGET"),
 		DBName:         []byte("LVYA"),
-		Keys:           []byte("xixi##haha"),
+		Keys:           []byte("xixi##abcde"),
 		Values:         []byte("niubi##xyz"),
 		Starts:         nil,
 		Limits:         nil,
@@ -106,32 +35,69 @@ func main() {
 		Reserved:       nil,
 	}
 
-	//createPack := &requestPackage.RequestDBEventPackage{
-	//	Version:        [2]byte{'V', '1'},
-	//	MethodLength:   6,
-	//	DBNameLength:   4,
-	//	KeysLength:     0,
-	//	ValuesLength:   0,
-	//	StartsLength:   0,
-	//	LimitsLength:   0,
-	//	PrefixesLength: 0,
-	//	SettingsLength: 0,
-	//	ReservedLength: 0,
-	//	Method:         []byte("CREATE"),
-	//	DBName:         []byte("LVYA"),
-	//	Keys:           nil,
-	//	Values:         nil,
-	//	Starts:         nil,
-	//	Limits:         nil,
-	//	Prefixes:       nil,
-	//	Settings:       nil,
-	//	Reserved:       nil,
-	//}
-	//
-	//
-	//connSync.Lock.Lock()
-	//go createPack.Pack(connSync.Conn)
-	//connSync.Lock.Unlock()
+	createPack := &requestPackage.RequestDBEventPackage{
+		Version:        [2]byte{'V', '1'},
+		MethodLength:   6,
+		DBNameLength:   4,
+		KeysLength:     0,
+		ValuesLength:   0,
+		StartsLength:   0,
+		LimitsLength:   0,
+		PrefixesLength: 0,
+		SettingsLength: 0,
+		ReservedLength: 0,
+		Method:         []byte("CREATE"),
+		DBName:         []byte("LVYA"),
+		Keys:           nil,
+		Values:         nil,
+		Starts:         nil,
+		Limits:         nil,
+		Prefixes:       nil,
+		Settings:       nil,
+		Reserved:       nil,
+	}
+
+	connSync.Lock.Lock()
+	go createPack.Pack(connSync.Conn)
+	connSync.Lock.Unlock()
+	packages, _ := connSync.ReceiveResponsePackages()
+	for _, p := range packages {
+		fmt.Println(string(p.Status))
+		fmt.Println(string(p.Values))
+		fmt.Println(string(p.Error))
+	}
+
+	putPack := &requestPackage.RequestDBEventPackage{
+		Version:        [2]byte{'V', '1'},
+		MethodLength:   3,
+		DBNameLength:   4,
+		KeysLength:     5,
+		ValuesLength:   5,
+		StartsLength:   0,
+		LimitsLength:   0,
+		PrefixesLength: 0,
+		SettingsLength: 0,
+		ReservedLength: 0,
+		Method:         []byte("PUT"),
+		DBName:         []byte("LVYA"),
+		Keys:           []byte("abcde"),
+		Values:         []byte("12345"),
+		Starts:         nil,
+		Limits:         nil,
+		Prefixes:       nil,
+		Settings:       nil,
+		Reserved:       nil,
+	}
+
+	connSync.Lock.Lock()
+	putPack.Pack(connSync.Conn)
+	connSync.Lock.Unlock()
+	packages, _ = connSync.ReceiveResponsePackages()
+	for _, p := range packages {
+		fmt.Println(string(p.Status))
+		fmt.Println(string(p.Values))
+		fmt.Println(string(p.Error))
+	}
 
 	doneChan := make(chan bool, 1)
 	wg := &sync.WaitGroup{}
