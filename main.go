@@ -229,6 +229,39 @@ func main() {
 		fmt.Println(string(p.Error))
 	}
 
+	prefixRangePack := &requestPackage.RequestDBEventPackage{
+		Version:        [2]byte{'V', '1'},
+		MethodLength:   11,
+		DBNameLength:   4,
+		KeysLength:     0,
+		ValuesLength:   0,
+		StartLength:    0,
+		LimitLength:    0,
+		PrefixLength:   3,
+		SettingsLength: 0,
+		ReservedLength: 0,
+		Method:         []byte("PREFIXRANGE"),
+		DBName:         []byte("LVYA"),
+		Keys:           nil,
+		Values:         nil,
+		Start:          nil,
+		Limit:          nil, // [Start, Limit)
+		Prefix:         []byte("abc"),
+		Settings:       nil,
+		Reserved:       nil,
+	}
+
+	connSync.Lock.Lock()
+	prefixRangePack.Pack(connSync.Conn)
+	connSync.Lock.Unlock()
+	packages, _ = connSync.ReceiveResponsePackages()
+	for _, p := range packages {
+		fmt.Println(string(p.Status))
+		fmt.Println(string(p.Values))
+		fmt.Println(string(p.Reserved))
+		fmt.Println(string(p.Error))
+	}
+
 	//doneChan := make(chan bool, 1)
 	//wg := &sync.WaitGroup{}
 	//for i := 0; i < 1000; i++ {
