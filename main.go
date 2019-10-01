@@ -17,20 +17,20 @@ func main() {
 		Version:        [2]byte{'V', '1'},
 		MethodLength:   8,
 		DBNameLength:   4,
-		KeysLength:     11,
-		ValuesLength:   10,
-		StartsLength:   0,
-		LimitsLength:   0,
-		PrefixesLength: 0,
+		KeysLength:     10,
+		ValuesLength:   0,
+		StartLength:    0,
+		LimitLength:    0,
+		PrefixLength:   0,
 		SettingsLength: 0,
 		ReservedLength: 0,
 		Method:         []byte("BATCHGET"),
 		DBName:         []byte("LVYA"),
-		Keys:           []byte("xixi##abcde"),
-		Values:         []byte("niubi##xyz"),
-		Starts:         nil,
-		Limits:         nil,
-		Prefixes:       nil,
+		Keys:           []byte("abcde##adc"),
+		Values:         nil,
+		Start:          nil,
+		Limit:          nil,
+		Prefix:         nil,
 		Settings:       nil,
 		Reserved:       nil,
 	}
@@ -41,18 +41,18 @@ func main() {
 		DBNameLength:   4,
 		KeysLength:     0,
 		ValuesLength:   0,
-		StartsLength:   0,
-		LimitsLength:   0,
-		PrefixesLength: 0,
+		StartLength:    0,
+		LimitLength:    0,
+		PrefixLength:   0,
 		SettingsLength: 0,
 		ReservedLength: 0,
 		Method:         []byte("CREATE"),
 		DBName:         []byte("LVYA"),
 		Keys:           nil,
 		Values:         nil,
-		Starts:         nil,
-		Limits:         nil,
-		Prefixes:       nil,
+		Start:          nil,
+		Limit:          nil,
+		Prefix:         nil,
 		Settings:       nil,
 		Reserved:       nil,
 	}
@@ -67,24 +67,57 @@ func main() {
 		fmt.Println(string(p.Error))
 	}
 
+	batchPutPack := &requestPackage.RequestDBEventPackage{
+		Version:        [2]byte{'V', '1'},
+		MethodLength:   8,
+		DBNameLength:   4,
+		KeysLength:     10,
+		ValuesLength:   10,
+		StartLength:    0,
+		LimitLength:    0,
+		PrefixLength:   0,
+		SettingsLength: 0,
+		ReservedLength: 0,
+		Method:         []byte("BATCHPUT"),
+		DBName:         []byte("LVYA"),
+		Keys:           []byte("abcde##adc"),
+		Values:         []byte("12345##123"),
+		Start:          nil,
+		Limit:          nil,
+		Prefix:         nil,
+		Settings:       nil,
+		Reserved:       nil,
+	}
+
+	connSync.Lock.Lock()
+	batchPutPack.Pack(connSync.Conn)
+	connSync.Lock.Unlock()
+	packages, _ = connSync.ReceiveResponsePackages()
+	for _, p := range packages {
+		fmt.Println(string(p.Status))
+		fmt.Println(string(p.Values))
+		fmt.Println(string(p.Error))
+	}
+
+
 	putPack := &requestPackage.RequestDBEventPackage{
 		Version:        [2]byte{'V', '1'},
 		MethodLength:   3,
 		DBNameLength:   4,
 		KeysLength:     5,
 		ValuesLength:   5,
-		StartsLength:   0,
-		LimitsLength:   0,
-		PrefixesLength: 0,
+		StartLength:    0,
+		LimitLength:    0,
+		PrefixLength:   0,
 		SettingsLength: 0,
 		ReservedLength: 0,
 		Method:         []byte("PUT"),
 		DBName:         []byte("LVYA"),
 		Keys:           []byte("abcde"),
-		Values:         []byte("12345"),
-		Starts:         nil,
-		Limits:         nil,
-		Prefixes:       nil,
+		Values:         []byte("12346"),
+		Start:          nil,
+		Limit:          nil,
+		Prefix:         nil,
 		Settings:       nil,
 		Reserved:       nil,
 	}
@@ -99,9 +132,10 @@ func main() {
 		fmt.Println(string(p.Error))
 	}
 
+
 	doneChan := make(chan bool, 1)
 	wg := &sync.WaitGroup{}
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1000; i++ {
 		wg.Add(2)
 		go handleSend(pack, connSync, doneChan, wg)
 		go handleReceive(connSync, doneChan, wg)
