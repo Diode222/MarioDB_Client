@@ -11,7 +11,7 @@ import (
 
 // TODO Once a package sended, handReceive() should be used once.
 func main() {
-	connSync := client.GetConnSync("127.0.0.1:50000")
+	connSync := client.GetConnSync("139.155.46.62:45555")
 	packs, _ := connSync.ReceiveResponsePackages()
 	for _, p := range packs {
 		pError := string(p.Error)
@@ -74,6 +74,7 @@ func main() {
 	connSync.Lock.Unlock()
 	packages, _ := connSync.ReceiveResponsePackages()
 	for _, p := range packages {
+		fmt.Println("create")
 		fmt.Println(string(p.Status))
 		fmt.Println(string(p.Values))
 		fmt.Println(string(p.Error))
@@ -276,7 +277,7 @@ func main() {
 
 	doneChan := make(chan bool, 1)
 	wg := &sync.WaitGroup{}
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 10; i++ {
 		wg.Add(2)
 		go handleSend(pack, connSync, doneChan, wg)
 		go handleReceive(connSync, doneChan, wg)
