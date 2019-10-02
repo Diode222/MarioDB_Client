@@ -5,35 +5,47 @@ import (
 	"github.com/Diode222/MarioDB_Client/client"
 	"github.com/Diode222/MarioDB_Client/requestPackage"
 	"log"
+	"strings"
 	"sync"
 )
 
 // TODO Once a package sended, handReceive() should be used once.
 func main() {
 	connSync := client.GetConnSync("127.0.0.1:50000")
+	packs, _ := connSync.ReceiveResponsePackages()
+	for _, p := range packs {
+		pError := string(p.Error)
+		if string(p.Status) == "Error" && strings.Contains(pError, "MAXCLIENTCOUNT") {
+			log.Printf(pError)
+			connSync.Conn.Close()
+			return
+		} else if string(p.Status) == "OK" {
+			continue
+		}
+	}
 	fmt.Println("来不来")
 
-	//pack := &requestPackage.RequestDBEventPackage{
-	//	Version:        [2]byte{'V', '1'},
-	//	MethodLength:   8,
-	//	DBNameLength:   4,
-	//	KeysLength:     10,
-	//	ValuesLength:   0,
-	//	StartLength:    0,
-	//	LimitLength:    0,
-	//	PrefixLength:   0,
-	//	SettingsLength: 0,
-	//	ReservedLength: 0,
-	//	Method:         []byte("BATCHGET"),
-	//	DBName:         []byte("LVYA"),
-	//	Keys:           []byte("abcde##adc"),
-	//	Values:         nil,
-	//	Start:          nil,
-	//	Limit:          nil,
-	//	Prefix:         nil,
-	//	Settings:       nil,
-	//	Reserved:       nil,
-	//}
+	pack := &requestPackage.RequestDBEventPackage{
+		Version:        [2]byte{'V', '1'},
+		MethodLength:   8,
+		DBNameLength:   4,
+		KeysLength:     10,
+		ValuesLength:   0,
+		StartLength:    0,
+		LimitLength:    0,
+		PrefixLength:   0,
+		SettingsLength: 0,
+		ReservedLength: 0,
+		Method:         []byte("BATCHGET"),
+		DBName:         []byte("LVYA"),
+		Keys:           []byte("abcde##adc"),
+		Values:         nil,
+		Start:          nil,
+		Limit:          nil,
+		Prefix:         nil,
+		Settings:       nil,
+		Reserved:       nil,
+	}
 
 	createPack := &requestPackage.RequestDBEventPackage{
 		Version:        [2]byte{'V', '1'},
@@ -262,14 +274,14 @@ func main() {
 		fmt.Println(string(p.Error))
 	}
 
-	//doneChan := make(chan bool, 1)
-	//wg := &sync.WaitGroup{}
-	//for i := 0; i < 1000; i++ {
-	//	wg.Add(2)
-	//	go handleSend(pack, connSync, doneChan, wg)
-	//	go handleReceive(connSync, doneChan, wg)
-	//}
-	//wg.Wait()
+	doneChan := make(chan bool, 1)
+	wg := &sync.WaitGroup{}
+	for i := 0; i < 1000; i++ {
+		wg.Add(2)
+		go handleSend(pack, connSync, doneChan, wg)
+		go handleReceive(connSync, doneChan, wg)
+	}
+	wg.Wait()
 }
 
 func handleSend(pack *requestPackage.RequestDBEventPackage, connSync *client.ConnSyncObj, doneChan chan bool, wg *sync.WaitGroup) {
